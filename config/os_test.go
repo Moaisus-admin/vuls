@@ -30,9 +30,9 @@ func TestEOL_IsStandardSupportEnded(t *testing.T) {
 			found:    true,
 		},
 		{
-			name:     "amazon linux 1 eol on 2023-6-30",
+			name:     "amazon linux 1 eol on 2023-12-31",
 			fields:   fields{family: Amazon, release: "2018.03"},
-			now:      time.Date(2023, 7, 1, 23, 59, 59, 0, time.UTC),
+			now:      time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
 			stdEnded: true,
 			extEnded: true,
 			found:    true,
@@ -363,6 +363,14 @@ func TestEOL_IsStandardSupportEnded(t *testing.T) {
 			stdEnded: false,
 			extEnded: false,
 		},
+		{
+			name:     "Ubuntu 23.10 supported",
+			fields:   fields{family: Ubuntu, release: "23.10"},
+			now:      time.Date(2024, 7, 31, 23, 59, 59, 0, time.UTC),
+			found:    true,
+			stdEnded: false,
+			extEnded: false,
+		},
 		//Debian
 		{
 			name:     "Debian 8 supported",
@@ -534,6 +542,14 @@ func TestEOL_IsStandardSupportEnded(t *testing.T) {
 			extEnded: false,
 			found:    true,
 		},
+		{
+			name:     "freebsd 14 supported",
+			fields:   fields{family: FreeBSD, release: "14"},
+			now:      time.Date(2028, 11, 21, 23, 59, 59, 0, time.UTC),
+			stdEnded: false,
+			extEnded: false,
+			found:    true,
+		},
 		// Fedora
 		{
 			name:     "Fedora 32 supported",
@@ -648,9 +664,25 @@ func TestEOL_IsStandardSupportEnded(t *testing.T) {
 			found:    true,
 		},
 		{
-			name:     "Fedora 39 not found",
+			name:     "Fedora 39 supported",
 			fields:   fields{family: Fedora, release: "39"},
-			now:      time.Date(2024, 5, 14, 23, 59, 59, 0, time.UTC),
+			now:      time.Date(2024, 11, 12, 23, 59, 59, 0, time.UTC),
+			stdEnded: false,
+			extEnded: false,
+			found:    true,
+		},
+		{
+			name:     "Fedora 39 eol since 2024-11-13",
+			fields:   fields{family: Fedora, release: "39"},
+			now:      time.Date(2024, 11, 13, 0, 0, 0, 0, time.UTC),
+			stdEnded: true,
+			extEnded: true,
+			found:    true,
+		},
+		{
+			name:     "Fedora 40 not found",
+			fields:   fields{family: Fedora, release: "40"},
+			now:      time.Date(2024, 11, 12, 23, 59, 59, 0, time.UTC),
 			stdEnded: false,
 			extEnded: false,
 			found:    false,

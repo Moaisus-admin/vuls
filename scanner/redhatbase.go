@@ -420,6 +420,15 @@ func (o *redhatBase) scanPackages() (err error) {
 		return xerrors.Errorf("Failed to scan installed packages: %w", err)
 	}
 
+	if !(o.getServerInfo().Mode.IsOffline() || (o.Distro.Family == constant.RedHat && o.getServerInfo().Mode.IsFast())) {
+		if err := o.yumMakeCache(); err != nil {
+			err = xerrors.Errorf("Failed to make repository cache: %w", err)
+			o.log.Warnf("err: %+v", err)
+			o.warns = append(o.warns, err)
+			// Only warning this error
+		}
+	}
+
 	if o.EnabledDnfModules, err = o.detectEnabledDnfModules(); err != nil {
 		return xerrors.Errorf("Failed to detect installed dnf modules: %w", err)
 	}
@@ -433,12 +442,8 @@ func (o *redhatBase) scanPackages() (err error) {
 		// Only warning this error
 	}
 
-	if o.getServerInfo().Mode.IsOffline() {
+	if o.getServerInfo().Mode.IsOffline() || (o.Distro.Family == constant.RedHat && o.getServerInfo().Mode.IsFast()) {
 		return nil
-	} else if o.Distro.Family == constant.RedHat {
-		if o.getServerInfo().Mode.IsFast() {
-			return nil
-		}
 	}
 
 	updatable, err := o.scanUpdatablePackages()
@@ -645,10 +650,6 @@ func (o *redhatBase) yumMakeCache() error {
 }
 
 func (o *redhatBase) scanUpdatablePackages() (models.Packages, error) {
-	if err := o.yumMakeCache(); err != nil {
-		return nil, xerrors.Errorf("Failed to `yum makecache`: %w", err)
-	}
-
 	isDnf := o.exec(util.PrependProxyEnv(`repoquery --version | grep dnf`), o.sudo.repoquery()).isSuccess()
 	cmd := `repoquery --all --pkgnarrow=updates --qf='%{NAME} %{EPOCH} %{VERSION} %{RELEASE} %{REPO}'`
 	if isDnf {
@@ -815,7 +816,7 @@ func (o *redhatBase) parseNeedsRestarting(stdout string) (procs []models.NeedRes
 		}
 
 		path := ss[1]
-		if !strings.HasPrefix(path, "/") {
+		if path != "" && !strings.HasPrefix(path, "/") {
 			path = strings.Fields(path)[0]
 			// [ec2-user@ip-172-31-11-139 ~]$ sudo needs-restarting
 			// 2024 : auditd
